@@ -1,8 +1,8 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
+<script setup></script>
 
-<template><Hello-world msg="Vite + Vue" /></template>
+<template>
+  <h1>app-certif</h1>
+</template>
 
 <style scoped>
 .logo {
