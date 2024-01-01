@@ -3,6 +3,13 @@ import { ref } from 'vue'
 import { items } from './movies.json'
 
 const movieList = ref(items)
+
+const setRating = (id, rating) => {
+  console.log('test')
+  movieList.value = movieList.value.map((movie) =>
+    movie.id === id ? { ...movie, rating } : movie
+  )
+}
 </script>
 
 <template>
@@ -22,10 +29,20 @@ const movieList = ref(items)
       <label class="movie-rating-label" for="">rating</label>
       <div
         class="movie-rating-stars"
+        :class="i === movie.rating ? 'cursor-disabled' : 'cursor-pointer'"
         v-for="i in movie.rating"
         :key="`${movie.id}${i}`"
+        @click="setRating(movie.id, i)"
       >
         *
+      </div>
+      <div
+        class="movie-rating-stars cursor-pointer"
+        v-for="i in 5 - movie.rating"
+        :key="`${movie.id}${i}`"
+        @click="setRating(movie.id, i)"
+      >
+        -
       </div>
     </div>
   </div>
@@ -43,5 +60,12 @@ const movieList = ref(items)
 }
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+.cursor-disabled {
+  cursor: not-allowed;
 }
 </style>
