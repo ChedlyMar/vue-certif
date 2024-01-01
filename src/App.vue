@@ -5,7 +5,6 @@ import { items } from './movies.json'
 const movieList = ref(items)
 
 const setRating = (id, rating) => {
-  console.log('test')
   movieList.value = movieList.value.map((movie) =>
     movie.id === id ? { ...movie, rating } : movie
   )
@@ -24,7 +23,12 @@ const setRating = (id, rating) => {
       {{ genre }}
     </p>
     <p class="movie-description">{{ movie.description }}</p>
-    <img class="movie-image" :src="movie.image" width="200" />
+    <div class="movie-image-container">
+      <span class="movie-image-rating">{{
+        movie.rating ? movie.rating : '-'
+      }}</span>
+      <img class="movie-image" :src="movie.image" width="200" />
+    </div>
     <div class="movie-rating">
       <label class="movie-rating-label" for="">rating</label>
       <div
@@ -67,5 +71,22 @@ const setRating = (id, rating) => {
 }
 .cursor-disabled {
   cursor: not-allowed;
+}
+
+.movie-image-rating {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin-right: 10px;
+  color: red;
+  font-weight: 900;
+  font-size: 24px;
+}
+
+.movie-image-container {
+  position: relative;
+  width: 200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 </style>
