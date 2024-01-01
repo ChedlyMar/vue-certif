@@ -1,7 +1,34 @@
-<script setup></script>
+<script setup>
+import { ref } from 'vue'
+import { items } from './movies.json'
+
+const movieList = ref(items)
+</script>
 
 <template>
-  <h1>app-certif</h1>
+  <h1 class="page-title">app-certif</h1>
+  <div v-for="movie in movieList" :key="movie.id">
+    <h2 class="movie-title">{{ movie.name }}</h2>
+    <p
+      class="movie-genre"
+      v-for="genre in movie.genres"
+      :key="`${movie.id}${genre}`"
+    >
+      {{ genre }}
+    </p>
+    <p class="movie-description">{{ movie.description }}</p>
+    <img class="movie-image" :src="movie.image" width="200" />
+    <div class="movie-rating">
+      <label class="movie-rating-label" for="">rating</label>
+      <div
+        class="movie-rating-stars"
+        v-for="i in movie.rating"
+        :key="`${movie.id}${i}`"
+      >
+        *
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
