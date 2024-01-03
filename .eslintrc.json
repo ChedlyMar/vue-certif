@@ -11,5 +11,12 @@
   },
   "plugins": ["vue"],
   "rules": {},
-  "ignorePatterns": ["node_modules", "/public/**", "ressources/**"]
+  "ignorePatterns": ["node_modules", "/public/**", "ressources/**"],
+  "settings": {
+    "import/resolver": {
+      "alias": {
+        "map": [["@", "./src"]]
+      }
+    }
+  }
 }
