@@ -1,5 +1,5 @@
 <script setup>
-import { reactive } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 
 const emit = defineEmits(['update:modelValue', 'cancel'])
 const props = defineProps({
@@ -29,6 +29,11 @@ const form = reactive({
   inTheaters: props.modelValue?.inTheaters || false,
   genres: props.modelValue?.genres || [],
   rating: props.modelValue?.rating || null,
+})
+
+const inputRef = ref()
+onMounted(() => {
+  inputRef.value.focus()
 })
 
 const validations = reactive({
@@ -102,6 +107,7 @@ function clearErrors() {
     <div class="movie-form-input-wrapper">
       <label for="name">Name</label>
       <input
+        ref="inputRef"
         type="text"
         name="name"
         v-model="form.name"
