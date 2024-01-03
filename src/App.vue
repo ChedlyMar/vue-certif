@@ -1,221 +1,267 @@
 <script setup>
-import { ref, watch } from 'vue'
+// FROM LIBRARIES
+import { computed, reactive, ref } from 'vue'
+// COMPONENTS
+import MovieItem from './components/MovieItem.vue'
+import MovieForm from './components/MovieForm.vue'
+// DATA
 import { items } from './movies.json'
 
-const movieList = ref(items)
-const newMovie = ref({
-  id: 0,
-  name: '',
-  description: '',
-  image: '',
-  genre: [],
-  inTheaters: false,
-  rating: 3,
+const movies = ref(items)
+
+const validations = reactive({
+  name: 'required',
+  genres: 'required',
 })
 
-const totalMoviesNumber = ref(0)
+const showMovieForm = ref(false)
 
-const averageRationg = ref(0)
-
-watch(
-  movieList,
-  () => {
-    averageRationg.value =
-      movieList.value.reduce((acc, curr) => acc + curr.rating, 0) /
-      movieList.value.length
-    totalMoviesNumber.value = movieList.value.length
-  },
-  { immediate: true }
-)
-
-const resetRatingToZero = () => {
-  movieList.value = movieList.value.map((movie) => ({ ...movie, rating: 0 }))
+function showForm() {
+  showMovieForm.value = true
+}
+function hideForm() {
+  showMovieForm.value = false
 }
 
-const genreList = ref(['Drama', 'Action', 'Crime', 'Comedy'])
+function updateRating(movieIndex, rating) {
+  movies.value[movieIndex].rating = rating
+}
+function removeMovie(movieIndex) {
+  movies.value = movies.value.filter((movie, index) => index !== movieIndex)
+}
+function editMovie(movieIndex) {
+  const movie = movies.value[movieIndex]
 
-const setRating = (id, rating) => {
-  movieList.value = movieList.value.map((movie) =>
-    movie.id === id ? { ...movie, rating } : movie
-  )
+  form.id = movie.id
+  form.name = movie.name
+  form.description = movie.description
+  form.image = movie.image
+  form.inTheaters = movie.inTheaters
+  form.genres = movie.genres
+
+  showForm()
 }
 
-const addGenre = (genre) => {
-  const index = newMovie.value.genre.findIndex(
-    (existingGenre) => genre === existingGenre
-  )
-  if (index === -1) newMovie.value.genre.push(genre)
-  else newMovie.value.genre.splice(index, 1)
+const validationRules = (rule) => {
+  if (rule === 'required') return /^ *$/
+
+  return null
 }
 
-const open = ref(false)
-const closeModal = () => {
-  newMovie.value = {
-    id: 0,
-    name: '',
-    description: '',
-    image: '',
-    genre: [],
-    inTheaters: false,
-    rating: 3,
+function validate() {
+  let valid = true
+  clearErrors()
+  // eslint-disable-next-line no-restricted-syntax
+  for (const [field, rule] of Object.entries(validations)) {
+    const validation = validationRules(rule)
+    if (validation) {
+      if (validation.test(form[field] || '')) {
+        errors[field] = `${field} is ${rule}`
+        valid = false
+      }
+    }
   }
-  open.value = false
+
+  return valid
 }
 
-const updateMovie = () => {
-  movieList.value = movieList.value.map((movie) =>
-    movie.id === newMovie.value.id ? newMovie.value : movie
-  )
+function updateMovie() {
+  if (validate()) {
+    const movie = {
+      id: form.id,
+      name: form.name,
+      description: form.description,
+      image: form.image,
+      genres: form.genres,
+      inTheaters: form.inTheaters,
+      rating: 0,
+    }
+
+    movies.value = movies.value.map((m) => {
+      if (m.id === movie.id) {
+        movie.rating = m.rating
+        return movie
+      }
+      return m
+    })
+
+    hideForm()
+  }
 }
 
-const saveMovie = () => {
-  if (newMovie.value.id === 0) {
-    newMovie.value.id = Math.floor(Math.random() * 9999)
-    movieList.value.push(newMovie.value)
-  } else updateMovie()
-  closeModal()
+function addMovie() {
+  if (validate()) {
+    const movie = {
+      id: Number(Date.now()),
+      name: form.name,
+      description: form.description,
+      image: form.image,
+      genres: form.genres,
+      inTheaters: form.inTheaters,
+      rating: 0,
+    }
+    movies.value.push(movie)
+    hideForm()
+  }
 }
 
-const editMovie = (movie) => {
-  open.value = true
-  newMovie.value = { ...movie }
+function saveMovie() {
+  if (form.id) {
+    updateMovie()
+  } else {
+    addMovie()
+  }
 }
 
-const deleteMovie = (id) => {
-  movieList.value = movieList.value.filter((movie) => movie.id !== id)
+const averageRating = computed(() => {
+  const avg = movies.value
+    .map((movie) => parseInt(movie.rating || 0, 10))
+    .reduce((a, b) => a + b, 0)
+
+  return Number(avg / movies.value.length).toFixed(1)
+})
+
+const totalMovies = computed(() => movies.value.length)
+
+function removeRatings() {
+  movies.value = movies.value.map((movie) => {
+    // eslint-disable-next-line no-param-reassign
+    movie.rating = 0
+    return movie
+  })
 }
 </script>
 
 <template>
-  <h1 class="page-title">app-certif</h1>
-  <h2>Avreage rating: {{ averageRationg }}</h2>
-  <h2>Movies total number: {{ totalMoviesNumber }}</h2>
-  <button @click="open = true">Open Modal</button>
-  <button @click="resetRatingToZero">reset rating</button>
+  <div class="app">
+    <div v-if="showMovieForm" class="modal-wrapper">
+      <MovieForm
+        :form="form"
+        :errors="errors"
+        @saveMovie="saveMovie"
+        @hideForm="hideForm"
+      />
+      <!-- <div class="modal-wrapper-inner">
+        <form @submit.prevent="saveMovie">
+          <div class="movie-form-input-wrapper">
+            <label for="name">Name</label>
+            <input
+              type="text"
+              name="name"
+              v-model="form.name"
+              class="movie-form-input"
+            />
+            <span class="movie-form-error">{{ errors.name }}</span>
+          </div>
+          <div class="movie-form-input-wrapper">
+            <label for="description">Description</label>
+            <textarea
+              type="text"
+              name="description"
+              v-model="form.description"
+              class="movie-form-textarea"
+            />
+            <span class="movie-form-error">{{ errors.description }}</span>
+          </div>
+          <div class="movie-form-input-wrapper">
+            <label for="image">Image</label>
+            <input
+              type="text"
+              name="image"
+              v-model="form.image"
+              class="movie-form-input"
+            />
+            <span class="movie-form-error">{{ errors.image }}</span>
+          </div>
+          <div class="movie-form-input-wrapper">
+            <label for="genre">Genres</label>
+            <select
+              name="genre"
+              v-model="form.genres"
+              class="movie-form-input"
+              multiple
+            >
+              <option
+                v-for="option in genres"
+                :key="option.value"
+                :value="option.value"
+              >
+                {{ option.text }}
+              </option>
+            </select>
+            <span class="movie-form-error">
+              {{ errors.genres }}
+            </span>
+          </div>
+          <div class="movie-form-input-wrapper">
+            <label for="genre" class="movie-form-checkbox-label">
+              <input
+                type="checkbox"
+                v-model="form.inTheaters"
+                :true-value="true"
+                :false-value="false"
+                class="movie-form-checkbox"
+              />
+              <span>In theaters</span>
+            </label>
+            <span class="movie-form-error">
+              {{ errors.inTheaters }}
+            </span>
+          </div>
+          <div class="movie-form-actions-wrapper">
+            <button type="button" class="button" @click="hideForm">
+              Cancel
+            </button>
 
-  <Teleport to="body">
-    <div v-if="open" class="modal">
-      <div>
-        <label for="">Name</label>
-        <input type="text" v-model="newMovie.name" />
+            <button type="submit" class="button-primary">
+              <span v-if="form.id">Update</span>
+              <span v-else>Create</span>
+            </button>
+          </div>
+        </form>
+      </div> -->
+    </div>
+    <div class="movie-actions-list-wrapper">
+      <div class="movie-actions-list-info">
+        <span>Total Movies: {{ totalMovies }}</span>
+        <span> / </span>
+        <span>Average Rating: {{ averageRating }}</span>
       </div>
-      <div>
-        <label for="">Description</label>
-        <textarea rows="4" v-model="newMovie.description"></textarea>
-      </div>
-      <div>
-        <label for="">image</label>
-        <input type="text" v-model="newMovie.image" />
-      </div>
-      <div>
-        <label for="">Genre</label>
-        <select multiple>
-          <option
-            v-for="genre in genreList"
-            :key="genre"
-            @click="addGenre(genre)"
-          >
-            {{ genre }}
-          </option>
-        </select>
-      </div>
-      <div>
-        <input type="checkbox" v-model="newMovie.inTheaters" />
-        <label for="">In theaters</label>
-      </div>
-      <div>
-        <button @click="closeModal">Cancel</button>
-        <button @click="saveMovie">Save</button>
+      <div class="flex-spacer"></div>
+      <div class="movie-actions-list-actions">
+        <button
+          class="self-end movie-actions-list-action-button button-primary justify-self-end"
+          @click="removeRatings"
+        >
+          Remove Ratings
+        </button>
+        <button
+          class="movie-actions-list-action-button"
+          :class="{
+            'button-primary': !showMovieForm,
+            'button-disabled': showMovieForm,
+          }"
+          @click="showForm"
+          :disabled="showMovieForm"
+        >
+          Add Movie
+        </button>
       </div>
     </div>
-  </Teleport>
-
-  <div v-for="movie in movieList" :key="movie.id">
-    <h2 class="movie-title">{{ movie.name }}</h2>
-    <p
-      class="movie-genre"
-      v-for="genre in movie.genres"
-      :key="`${movie.id}${genre}`"
-    >
-      {{ genre }}
-    </p>
-    <p class="movie-description">{{ movie.description }}</p>
-    <div class="movie-image-container">
-      <span class="movie-image-rating">{{
-        movie.rating ? movie.rating : '-'
-      }}</span>
-      <img class="movie-image" :src="movie.image" width="200" />
-    </div>
-    <button @click="deleteMovie(movie.id)">Delete</button>
-    <button @click="editMovie(movie)">Edit</button>
-    <div class="movie-rating">
-      <label class="movie-rating-label" for="">rating</label>
+    <div class="movie-list">
       <div
-        class="movie-rating-stars"
-        :class="i === movie.rating ? 'cursor-disabled' : 'cursor-pointer'"
-        v-for="i in movie.rating"
-        :key="`${movie.id}${i}`"
-        @click="setRating(movie.id, i)"
+        class="movie-item group"
+        v-for="(movie, movieIndex) in movies"
+        :key="movie.id"
       >
-        *
-      </div>
-      <div
-        class="movie-rating-stars cursor-pointer"
-        v-for="i in 5 - movie.rating"
-        :key="`${movie.id}${i}`"
-        @click="setRating(movie.id, i)"
-      >
-        -
+        <MovieItem
+          :movie="movie"
+          :movieIndex="movieIndex"
+          @updateRating="updateRating"
+          @editMovie="editMovie"
+          @removeMovie="removeMovie"
+        />
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-.cursor-disabled {
-  cursor: not-allowed;
-}
-
-.movie-image-rating {
-  position: absolute;
-  top: 0;
-  right: 0;
-  margin-right: 10px;
-  color: red;
-  font-weight: 900;
-  font-size: 24px;
-}
-
-.movie-image-container {
-  position: relative;
-  width: 200px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.modal {
-  position: fixed;
-  z-index: 999;
-  top: 20%;
-  left: 50%;
-  width: 300px;
-  margin-left: -150px;
-  background-color: royalblue;
-}
-</style>
