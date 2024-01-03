@@ -73,18 +73,22 @@ function removeRatings() {
 
 <template>
   <div class="app">
-    <AppModal
-      v-if="showMovieForm"
-      :title="currentMovie?.id ? 'Edit Movie' : 'Add Movie'"
-      @close="hideForm()"
-    >
-      <MovieForm
+    <Transition name="fade-in">
+      <AppModal
         v-if="showMovieForm"
-        @update:modelValue="saveMovie"
-        :modelValue="currentMovie"
-        @cancel="hideForm"
-      />
-    </AppModal>
+        :title="currentMovie?.id ? 'Edit Movie' : 'Add Movie'"
+        @close="hideForm()"
+      >
+        <Transition name="slide-down">
+          <MovieForm
+            v-if="showMovieForm"
+            @update:modelValue="saveMovie"
+            :modelValue="currentMovie"
+            @cancel="hideForm"
+          />
+        </Transition>
+      </AppModal>
+    </Transition>
     <div class="movie-actions-list-wrapper">
       <div class="movie-actions-list-info">
         <span>Total Movies: {{ totalMovies }}</span>
@@ -124,3 +128,22 @@ function removeRatings() {
     </div>
   </div>
 </template>
+
+<style>
+.slide-down-enter-from {
+  transform: translateY(-50px);
+}
+.slide-down-enter-active {
+  transition: all 2s ease;
+}
+
+.fade-in-enter-from {
+  opacity: 0;
+}
+.fade-in-enter-to {
+  opacity: 1;
+}
+.fade-in-enter-active {
+  transition: all 2s ease-in;
+}
+</style>
